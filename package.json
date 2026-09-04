@@ -1,0 +1,9 @@
+{
+  "name": "crm-leads-terrenos",
+  "private": true,
+  "version": "1.0.0",
+  "description": "CRM compartido de leads para terrenos",
+  "dependencies": {
+    "@upstash/redis": "^1.35.3"
+  }
+}

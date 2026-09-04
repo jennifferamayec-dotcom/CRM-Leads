@@ -377,6 +377,7 @@
 
 <script>
 const STORAGE_KEY = 'terrenos-crm-leads';
+const API_URL = '/api/leads';
 
 const STAGES = [
   { key: 'nuevo', label: 'Nuevo' },
@@ -403,24 +404,35 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 1800);
 }
 
-async function loadLeads() {
+async function loadLeads(showError = true) {
   try {
-    const result = await window.storage.get(STORAGE_KEY, false);
-    leads = result && result.value ? JSON.parse(result.value) : [];
+    const response = await fetch(API_URL, { cache: 'no-store' });
+    if (!response.ok) throw new Error('No se pudo consultar la nube.');
+    const result = await response.json();
+    leads = Array.isArray(result.leads) ? result.leads : [];
   } catch (err) {
-    leads = [];
+    if (showError) showToast('No se pudo conectar con la nube.');
   }
   render();
 }
 
 async function saveLeads() {
   try {
-    const result = await window.storage.set(STORAGE_KEY, JSON.stringify(leads), false);
-    if (!result) showToast('No se pudo guardar. Intenta de nuevo.');
+    const response = await fetch(API_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ leads })
+    });
+    if (!response.ok) throw new Error('No se pudo guardar en la nube.');
   } catch (err) {
-    showToast('Error al guardar los datos.');
+    showToast('No se pudo guardar el cambio en la nube.');
+    throw err;
   }
 }
+
+setInterval(() => {
+  if (!editingId) loadLeads(false);
+}, 10000);
 
 function formatCurrency(n) {
   if (!n && n !== 0) return '';
