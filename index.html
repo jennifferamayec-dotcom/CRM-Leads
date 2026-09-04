@@ -314,10 +314,27 @@
   .toast.show { opacity: 1; }
 
   @media (max-width: 640px) {
-    body { padding: 18px 14px 50px; }
+    body { padding: 18px 12px 50px; }
+    header.top h1 { font-size: 18px; }
     .stats { grid-template-columns: repeat(2, 1fr); }
     header.top { flex-direction: column; align-items: stretch; }
-    .search-box { width: 100%; }
+    .top-actions { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .top-actions input,
+    .top-actions select,
+    .top-actions button { width: 100%; }
+    .board { display: flex; flex-direction: column; gap: 10px; overflow-x: visible; }
+    .column {
+      min-width: 0;
+      max-width: none;
+      width: 100%;
+      max-height: none;
+    }
+    .column-body { overflow-y: visible; }
+    .field-row { grid-template-columns: 1fr; gap: 0; }
+    .modal { padding: 18px; max-height: 92vh; }
+    .modal-actions { flex-wrap: wrap; }
+    .modal-actions > div { width: 100%; }
+    .modal-actions > div button { flex: 1; }
   }
 </style>
 </head>
