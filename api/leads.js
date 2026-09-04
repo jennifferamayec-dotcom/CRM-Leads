@@ -1,6 +1,7 @@
 const { Redis } = require('@upstash/redis');
 
-const LEADS_KEY = 'terrenos-crm-leads';
+const LEADS_KEY = 'terrenos-crm-leads-v2';
+const LEGACY_LEADS_KEY = 'terrenos-crm-leads';
 
 function sendJson(response, status, body) {
   response.status(status).setHeader('Content-Type', 'application/json');
@@ -22,13 +23,25 @@ module.exports = async function handler(request, response) {
 
     if (request.method === 'GET') {
       const storedLeads = await redis.hgetall(LEADS_KEY);
-      const leads = Object.values(storedLeads || {}).map((lead) => {
+      let leads = Object.values(storedLeads || {}).map((lead) => {
         try {
           return typeof lead === 'string' ? JSON.parse(lead) : lead;
         } catch (error) {
           return null;
         }
       }).filter(Boolean);
+
+      if (leads.length === 0) {
+        const legacyLeads = await redis.get(LEGACY_LEADS_KEY);
+        if (Array.isArray(legacyLeads)) {
+          leads = legacyLeads.filter((lead) => lead && typeof lead.id === 'string');
+          if (leads.length > 0) {
+            await redis.hset(LEADS_KEY, Object.fromEntries(
+              leads.map((lead) => [lead.id, JSON.stringify(lead)])
+            ));
+          }
+        }
+      }
       return sendJson(response, 200, { leads });
     }
 
