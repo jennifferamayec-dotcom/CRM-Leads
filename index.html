@@ -468,18 +468,23 @@ async function loadLeads(showError = true) {
   render();
 }
 
-async function saveLeads() {
+async function saveLead(lead) {
   try {
     const response = await fetch(API_URL, {
-      method: 'PUT',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ leads })
+      body: JSON.stringify({ lead })
     });
     if (!response.ok) throw new Error('No se pudo guardar en la nube.');
   } catch (err) {
-    showToast('No se pudo guardar el cambio en la nube.');
+    showToast('No se pudo guardar. Verifica la conexión cloud de Vercel.');
     throw err;
   }
+}
+
+async function deleteLead(id) {
+  const response = await fetch(`${API_URL}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+  if (!response.ok) throw new Error('No se pudo eliminar en la nube.');
 }
 
 setInterval(() => {
@@ -717,14 +722,14 @@ async function saveFromModal() {
   if (editingId) {
     const idx = leads.findIndex(l => l.id === editingId);
     if (idx > -1) leads[idx] = { ...leads[idx], ...data };
-    await saveLeads();
+    await saveLead(leads[idx]);
     closeModal();
     render();
     showToast('Lead actualizado.');
   } else {
     const newLead = { id: uid(), createdAt: new Date().toISOString(), ...data };
     leads.push(newLead);
-    await saveLeads();
+    await saveLead(newLead);
     closeModal();
     render();
     await pushToSheet(newLead);
@@ -734,8 +739,13 @@ async function saveFromModal() {
 
 async function deleteFromModal() {
   if (!editingId) return;
+  try {
+    await deleteLead(editingId);
+  } catch (err) {
+    showToast('No se pudo eliminar. Verifica la conexión cloud de Vercel.');
+    return;
+  }
   leads = leads.filter(l => l.id !== editingId);
-  await saveLeads();
   closeModal();
   render();
   showToast('Lead eliminado.');

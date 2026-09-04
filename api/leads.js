@@ -21,25 +21,39 @@ module.exports = async function handler(request, response) {
     const redis = getRedis();
 
     if (request.method === 'GET') {
-      const leads = (await redis.get(LEADS_KEY)) || [];
-      return sendJson(response, 200, { leads: Array.isArray(leads) ? leads : [] });
+      const storedLeads = await redis.hgetall(LEADS_KEY);
+      const leads = Object.values(storedLeads || {}).map((lead) => {
+        try {
+          return typeof lead === 'string' ? JSON.parse(lead) : lead;
+        } catch (error) {
+          return null;
+        }
+      }).filter(Boolean);
+      return sendJson(response, 200, { leads });
     }
 
-    if (request.method === 'PUT') {
+    if (request.method === 'POST') {
       const payload = typeof request.body === 'string'
         ? JSON.parse(request.body)
         : request.body;
-      const leads = payload && payload.leads;
+      const lead = payload && payload.lead;
 
-      if (!Array.isArray(leads)) {
-        return sendJson(response, 400, { error: 'El campo leads debe ser un arreglo.' });
+      if (!lead || typeof lead.id !== 'string') {
+        return sendJson(response, 400, { error: 'El lead debe tener un id válido.' });
       }
 
-      await redis.set(LEADS_KEY, leads);
-      return sendJson(response, 200, { ok: true, leads });
+      await redis.hset(LEADS_KEY, { [lead.id]: JSON.stringify(lead) });
+      return sendJson(response, 200, { ok: true, lead });
     }
 
-    response.setHeader('Allow', 'GET, PUT');
+    if (request.method === 'DELETE') {
+      const id = request.query && request.query.id;
+      if (!id) return sendJson(response, 400, { error: 'Falta el id del lead.' });
+      await redis.hdel(LEADS_KEY, id);
+      return sendJson(response, 200, { ok: true });
+    }
+
+    response.setHeader('Allow', 'GET, POST, DELETE');
     return sendJson(response, 405, { error: 'Método no permitido.' });
   } catch (error) {
     console.error(error);

@@ -11,4 +11,6 @@ CRM web compartido para registrar y consultar leads desde varios dispositivos.
    - `KV_REST_API_TOKEN`
 4. Haz un nuevo deploy.
 
-El frontend usa `/api/leads`. Los registros se guardan en Redis y todos los usuarios del despliegue comparten la misma lista. El panel consulta cambios nuevos automáticamente cada 10 segundos cuando no se esta editando un lead.
+El frontend usa `/api/leads`. Cada lead se guarda por separado en Redis, por lo que dos usuarios pueden registrar o editar leads sin sobrescribir la lista completa. El panel consulta cambios nuevos automáticamente cada 10 segundos cuando no se esta editando un lead.
+
+Importante: los usuarios deben abrir la URL de Vercel del proyecto. El enlace de GitHub muestra el codigo, pero no ejecuta la API `/api/leads` ni puede compartir registros.
