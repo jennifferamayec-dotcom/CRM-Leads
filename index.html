@@ -161,6 +161,66 @@
     padding-bottom: 20px;
   }
 
+  .lead-list-section {
+    margin-top: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 10px;
+    padding: 16px;
+    animation: rise-in 560ms 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .section-heading h2 {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0;
+    color: var(--surface);
+  }
+
+  .section-heading span { color: #9FB0C9; font-size: 12px; }
+  .table-wrap { overflow-x: auto; }
+
+  .lead-table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+    color: var(--surface);
+    font-size: 12px;
+  }
+
+  .lead-table th {
+    color: #9FB0C9;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-align: left;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.16);
+  }
+
+  .lead-table td {
+    padding: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    vertical-align: top;
+  }
+
+  .lead-table tbody tr { cursor: pointer; transition: background 180ms ease; }
+  .lead-table tbody tr:hover { background: rgba(255,255,255,0.08); }
+  .lead-table .table-name { font-weight: 600; color: var(--surface); }
+  .lead-table .table-muted { color: #9FB0C9; }
+  .table-empty { color: #9FB0C9; padding: 14px 10px; text-align: center; }
+
   .column {
     background: rgba(255,255,255,0.04);
     border: 1px dashed rgba(255,255,255,0.18);
@@ -371,6 +431,8 @@
     .top-actions select,
     .top-actions button { width: 100%; }
     .board { display: flex; flex-direction: column; gap: 10px; overflow-x: visible; }
+    .lead-list-section { padding: 12px; }
+    .section-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
     .column {
       min-width: 0;
       max-width: none;
@@ -411,6 +473,28 @@
 <div class="stats" id="statsRow"></div>
 
 <div class="board" id="board"></div>
+
+<section class="lead-list-section" id="leadListSection" style="display:none;">
+  <div class="section-heading">
+    <h2>Usuarios registrados en la nube</h2>
+    <span id="leadListCount"></span>
+  </div>
+  <div class="table-wrap">
+    <table class="lead-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Teléfono</th>
+          <th>Origen</th>
+          <th>Terreno</th>
+          <th>Presupuesto</th>
+          <th>Etapa</th>
+        </tr>
+      </thead>
+      <tbody id="leadListBody"></tbody>
+    </table>
+  </div>
+</section>
 
 <div id="emptyState" class="empty-state" style="display:none;">
   <h2>Todavía no tienes leads</h2>
@@ -533,6 +617,7 @@ function getFilteredLeads() {
 function render() {
   renderStats();
   const filtered = getFilteredLeads();
+  renderLeadList(filtered);
   const board = document.getElementById('board');
   const empty = document.getElementById('emptyState');
 
@@ -582,6 +667,34 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str || '';
   return div.innerHTML;
+}
+
+function renderLeadList(filtered) {
+  const section = document.getElementById('leadListSection');
+  const body = document.getElementById('leadListBody');
+  const count = document.getElementById('leadListCount');
+  section.style.display = leads.length ? 'block' : 'none';
+  count.textContent = `${filtered.length} visible(s) de ${leads.length}`;
+
+  body.innerHTML = filtered.length
+    ? filtered.map(lead => {
+      const stage = STAGES.find(item => item.key === lead.stage);
+      return `
+        <tr data-id="${escapeHtml(lead.id)}">
+          <td class="table-name">${escapeHtml(lead.name)}</td>
+          <td>${escapeHtml(lead.phone || '-')}</td>
+          <td>${escapeHtml(lead.origin || '-')}</td>
+          <td>${escapeHtml(lead.terreno || '-')}</td>
+          <td>${lead.presupuesto ? formatCurrency(lead.presupuesto) : '-'}</td>
+          <td class="table-muted">${escapeHtml(stage ? stage.label : lead.stage || '-')}</td>
+        </tr>
+      `;
+    }).join('')
+    : '<tr><td class="table-empty" colspan="6">No hay usuarios con estos filtros.</td></tr>';
+
+  body.querySelectorAll('tr[data-id]').forEach(row => {
+    row.addEventListener('click', () => openEditModal(row.dataset.id));
+  });
 }
 
 function originOptions(selected) {
