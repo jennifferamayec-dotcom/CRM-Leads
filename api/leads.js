@@ -12,7 +12,25 @@ function getRedis() {
   const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!url || !token) {
-    throw new Error('Faltan KV_REST_API_URL y KV_REST_API_TOKEN.');
+    const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
+    if (!redisUrl) {
+      const error = new Error('Faltan variables de conexión de Upstash.');
+      error.code = 'MISSING_REDIS_CONFIG';
+      throw error;
+    }
+
+    const parsed = new URL(redisUrl);
+    const redisToken = decodeURIComponent(parsed.password || '');
+    if (!redisToken || !parsed.hostname) {
+      const error = new Error('REDIS_URL no tiene un formato válido.');
+      error.code = 'INVALID_REDIS_URL';
+      throw error;
+    }
+
+    return new Redis({
+      url: `https://${parsed.hostname}`,
+      token: redisToken
+    });
   }
   return new Redis({ url, token });
 }
@@ -72,6 +90,9 @@ module.exports = async function handler(request, response) {
     return sendJson(response, 405, { error: 'Método no permitido.' });
   } catch (error) {
     console.error(error);
-    return sendJson(response, 500, { error: 'No se pudo acceder al almacenamiento cloud.' });
+    return sendJson(response, 500, {
+      error: 'No se pudo acceder al almacenamiento cloud.',
+      code: error.code || 'REDIS_REQUEST_FAILED'
+    });
   }
 };
