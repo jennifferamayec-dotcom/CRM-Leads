@@ -13,6 +13,14 @@ function getSheet() {
   return sheet;
 }
 
+function normalizeHeader(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
 function doGet() {
   try {
     const sheet = getSheet();
@@ -43,8 +51,10 @@ function doPost(event) {
     const sheet = getSheet();
     const values = sheet.getDataRange().getDisplayValues();
     const headers = values[0].map(String);
-    const idColumn = headers.indexOf('identificacion');
-    const nameColumn = headers.indexOf('Cliente / Contacto');
+    const normalizedHeaders = headers.map(normalizeHeader);
+    const idColumn = normalizedHeaders.indexOf('identificacion');
+    const nameColumn = normalizedHeaders.indexOf('cliente / contacto');
+    const phoneColumn = normalizedHeaders.indexOf('contacto');
     const leadId = String(data.id || data.identificacion || data['Cliente / Contacto'] || '');
     const leadName = String(data['Cliente / Contacto'] || data.nombre || '');
 
@@ -55,19 +65,27 @@ function doPost(event) {
       return sameId || sameName;
     });
 
-    const row = headers.map(header => {
-      if (header === 'identificacion') return leadId;
-      if (header === 'Cliente / Contacto') return leadName;
-      if (header === 'Origen / Canal') return data['Origen / Canal'] || data.origen || '';
-      if (header === 'Fecha 1 CONTACTO') return data['Fecha 1 CONTACTO'] || data.fecha || '';
-      if (header === 'Interés') return data['Interés'] || data.interes || '';
-      if (header === 'Último Mensaje / Nota') return data['Último Mensaje / Nota'] || data.nota || '';
-      if (header === 'CONTACTO') return data.CONTACTO || data.contacto || '';
-      if (header === 'Resultado') return data.Resultado || data.etapa || 'En proceso';
+    const row = headers.map((header, column) => {
+      const key = normalizedHeaders[column];
+      if (key === 'identificacion') return leadId;
+      if (key === 'cliente / contacto') return leadName;
+      if (key === 'origen / canal') return data['Origen / Canal'] || data.origen || '';
+      if (key === 'fecha 1 contacto') return data['Fecha 1 CONTACTO'] || data.fecha || '';
+      if (key === 'financiamiento') return data.Financiamiento || '';
+      if (key === 'interes') return data['Interés'] || data.interes || '';
+      if (key === 'ultimo mensaje / nota') return data['Último Mensaje / Nota'] || data.nota || '';
+      if (key === 'contacto') return String(data.CONTACTO || data.contacto || '');
+      if (key === 't_movin' || key === 'tmovin') return data.t_Movin || data.tmovin || '';
+      if (key === 'resultado') return data.Resultado || data.etapa || 'En proceso';
       return data[header] || '';
     });
 
-    if (rowIndex < 0) sheet.appendRow(row);
+    if (phoneColumn >= 0) {
+      const phoneRange = sheet.getRange(1, phoneColumn + 1, sheet.getMaxRows(), 1);
+      phoneRange.setNumberFormat('@');
+      phoneRange.setDataValidation(null);
+    }
+    if (rowIndex < 0) sheet.getRange(sheet.getLastRow() + 1, 1, 1, headers.length).setValues([row]);
     else sheet.getRange(rowIndex + 1, 1, 1, headers.length).setValues([row]);
 
     return json({ ok: true, id: leadId });
