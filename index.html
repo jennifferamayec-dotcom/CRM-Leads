@@ -1006,15 +1006,15 @@ async function getSyncKey() {
 
 function sheetLeadToCrm(row) {
   return {
-    id: String(row.id || row.identificacion || uid()),
-    name: row.name || row.nombre || '',
-    phone: row.phone || row.contacto || '',
-    origin: row.origin || row.origen || '',
+    id: String(row.id || row.identificacion || row['Cliente / Contacto'] || uid()),
+    name: row.name || row.nombre || row['Cliente / Contacto'] || '',
+    phone: row.phone || row.contacto || row.CONTACTO || '',
+    origin: row.origin || row.origen || row['Origen / Canal'] || '',
     terreno: row.terreno || row.interes || row.intereses || '',
-    presupuesto: row.presupuesto || '',
-    stage: row.stage || row.etapa || 'nuevo',
-    notas: row.notas || row.nota || '',
-    lastContact: row.lastContact || row.fecha || '',
+    presupuesto: row.presupuesto || row['Interés'] || row.interes || '',
+    stage: row.stage || row.etapa || row.Resultado || 'nuevo',
+    notas: row.notas || row.nota || row['Último Mensaje / Nota'] || '',
+    lastContact: row.lastContact || row.fecha || row['Fecha 1 CONTACTO'] || '',
     createdAt: row.createdAt || row.fecha_creacion || new Date().toISOString()
   };
 }
@@ -1049,6 +1049,16 @@ async function pushToSheet(lead) {
       body: JSON.stringify({
         clave: key || '',
         id: lead.id || '',
+        identificacion: lead.id || '',
+        'Cliente / Contacto': lead.name || '',
+        'Origen / Canal': lead.origin || '',
+        'Fecha 1 CONTACTO': lead.lastContact ? lead.lastContact.split('T')[0] : '',
+        Financiamiento: '',
+        'Interés': lead.presupuesto || '',
+        'Último Mensaje / Nota': lead.notas || '',
+        CONTACTO: lead.phone || '',
+        t_Movin: '',
+        Resultado: lead.stage || 'En proceso',
         nombre: lead.name || '',
         origen: lead.origin || '',
         fecha: lead.lastContact ? lead.lastContact.split('T')[0] : '',
