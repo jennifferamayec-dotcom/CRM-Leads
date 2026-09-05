@@ -614,8 +614,14 @@ async function loadLeads(showError = true) {
   } catch (err) {
     setCloudStatus(false);
     if (showError) showToast('No se pudo conectar con la nube.');
+    if (!document.getElementById('board').innerHTML) render();
   }
-  render();
+}
+
+function leadsFingerprint(items) {
+  return JSON.stringify(items
+    .map(lead => ({ ...lead }))
+    .sort((a, b) => String(a.id).localeCompare(String(b.id))));
 }
 
 async function saveLead(lead) {
@@ -1047,9 +1053,13 @@ async function syncFromSheet(showMessage = true) {
     const result = await response.json();
     if (!result.ok && result.error) throw new Error(result.error);
     if (!Array.isArray(result.leads)) throw new Error('Respuesta inválida de Google Sheets.');
-    leads = result.leads.map(sheetLeadToCrm).filter(lead => lead.name);
-    await Promise.all(leads.map(saveLead));
-    render();
+    const importedLeads = result.leads.map(sheetLeadToCrm).filter(lead => lead.name);
+    const changed = leadsFingerprint(importedLeads) !== leadsFingerprint(leads);
+    if (changed) {
+      leads = importedLeads;
+      await Promise.all(leads.map(saveLead));
+      render();
+    }
     if (showMessage) showToast(`${leads.length} lead(s) importado(s) desde Sheets.`);
   } catch (err) {
     showToast('No se pudo leer Google Sheets. Revisa que la implementación sea pública.');
