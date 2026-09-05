@@ -303,6 +303,16 @@
     flex-direction: column;
     gap: 8px;
   }
+  .column-body.is-collapsed .lead-card:nth-of-type(n + 6) { display: none; }
+  .expand-stage-btn {
+    width: 100%;
+    margin-top: 2px;
+    padding: 7px 8px;
+    background: rgba(255,255,255,0.08);
+    color: #C9D5E6;
+    border-color: rgba(255,255,255,0.16);
+    font-size: 11px;
+  }
 
   .lead-card {
     background: var(--surface);
@@ -760,10 +770,26 @@ function render() {
             <span class="count-pill">${stageLeads.length}</span>
           </div>
         </div>
-        <div class="column-body">${cardsHtml}</div>
+        <div class="column-body" data-stage="${stage.key}">${cardsHtml}</div>
       </div>
     `;
   }).join('');
+
+  board.querySelectorAll('.column-body').forEach(body => {
+    const cards = body.querySelectorAll('.lead-card');
+    if (cards.length <= 5) return;
+    body.classList.add('is-collapsed');
+    const button = document.createElement('button');
+    button.className = 'expand-stage-btn';
+    button.type = 'button';
+    button.textContent = `Ver más (${cards.length - 5})`;
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      const expanded = body.classList.toggle('is-collapsed') === false;
+      button.textContent = expanded ? 'Ver menos' : `Ver más (${cards.length - 5})`;
+    });
+    body.appendChild(button);
+  });
 
   board.querySelectorAll('.lead-card').forEach(card => {
     card.addEventListener('click', () => openEditModal(card.dataset.id));
