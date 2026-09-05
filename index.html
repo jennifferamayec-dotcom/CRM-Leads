@@ -607,8 +607,8 @@ async function loadLeads(showError = true) {
     const result = await response.json();
     setCloudStatus(true);
     const nextLeads = Array.isArray(result.leads) ? result.leads : [];
-    const changed = JSON.stringify(nextLeads) !== JSON.stringify(leads);
-    leads = nextLeads;
+    const changed = leadsFingerprint(nextLeads) !== leadsFingerprint(leads);
+    if (changed) leads = nextLeads;
     if (changed || !document.getElementById('board').innerHTML) render();
     return;
   } catch (err) {
@@ -620,7 +620,18 @@ async function loadLeads(showError = true) {
 
 function leadsFingerprint(items) {
   return JSON.stringify(items
-    .map(lead => ({ ...lead }))
+    .map(lead => ({
+      id: String(lead.id || ''),
+      name: String(lead.name || ''),
+      phone: String(lead.phone || ''),
+      origin: String(lead.origin || ''),
+      terreno: String(lead.terreno || ''),
+      presupuesto: String(lead.presupuesto || ''),
+      stage: String(lead.stage || ''),
+      notas: String(lead.notas || ''),
+      lastContact: String(lead.lastContact || ''),
+      createdAt: String(lead.createdAt || '')
+    }))
     .sort((a, b) => String(a.id).localeCompare(String(b.id))));
 }
 
@@ -647,8 +658,7 @@ async function deleteLead(id) {
 
 setInterval(() => {
   if (!editingId) {
-    loadLeads(false);
-    syncFromSheet(false);
+    loadLeads(false).then(() => syncFromSheet(false));
   }
 }, 10000);
 
@@ -1038,7 +1048,7 @@ function sheetLeadToCrm(row) {
     stage: normalizeStage(row.stage || row.etapa || row.Resultado || 'nuevo'),
     notas: row.notas || row.nota || row['Último Mensaje / Nota'] || '',
     lastContact: row.lastContact || row.fecha || row['Fecha 1 CONTACTO'] || '',
-    createdAt: row.createdAt || row.fecha_creacion || new Date().toISOString()
+    createdAt: row.createdAt || row.fecha_creacion || `sheet-${String(row.id || row.identificacion || row['Cliente / Contacto'] || '')}`
   };
 }
 
