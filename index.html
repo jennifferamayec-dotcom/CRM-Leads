@@ -35,11 +35,18 @@
     to { opacity: 1; }
   }
 
+  @keyframes atmosphere-drift {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(1.5%, -1%, 0) scale(1.04); }
+  }
+
   * { box-sizing: border-box; }
 
   body {
     margin: 0;
     background:
+      radial-gradient(circle at 14% 8%, rgba(68,112,158,0.26), transparent 32%),
+      radial-gradient(circle at 86% 78%, rgba(232,114,44,0.12), transparent 28%),
       linear-gradient(var(--bg-line) 1px, transparent 1px) 0 0 / 100% 28px,
       linear-gradient(90deg, var(--bg-line) 1px, transparent 1px) 0 0 / 28px 100%,
       var(--bg);
@@ -47,6 +54,18 @@
     font-family: var(--sans);
     min-height: 100vh;
     padding: 28px 32px 60px;
+    position: relative;
+    isolation: isolate;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: -12%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.055), transparent 58%);
+    animation: atmosphere-drift 18s ease-in-out infinite;
   }
 
   header.top {
@@ -59,6 +78,7 @@
     border-bottom: 1px solid rgba(255,255,255,0.15);
     padding-bottom: 20px;
     animation: rise-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    box-shadow: 0 18px 40px rgba(3,10,24,0.14);
   }
 
   header.top h1 {
@@ -152,6 +172,7 @@
     padding: 14px 16px;
     color: var(--ink);
     animation: rise-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    box-shadow: 0 10px 22px rgba(3,10,24,0.16), inset 0 1px 0 rgba(255,255,255,0.6);
   }
   .stat-card:nth-child(2) { animation-delay: 80ms; }
   .stat-card:nth-child(3) { animation-delay: 160ms; }
@@ -243,7 +264,7 @@
 
   .column {
     background: rgba(255,255,255,0.04);
-    border: 1px dashed rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.14);
     border-radius: 10px;
     min-width: 260px;
     max-width: 260px;
@@ -252,6 +273,7 @@
     flex-direction: column;
     max-height: calc(100vh - 260px);
     animation: rise-in 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    box-shadow: 0 16px 30px rgba(3,10,24,0.12), inset 0 1px 0 rgba(255,255,255,0.04);
   }
   .column:nth-child(2) { animation-delay: 60ms; }
   .column:nth-child(3) { animation-delay: 120ms; }
