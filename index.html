@@ -645,7 +645,10 @@ async function deleteLead(id) {
 }
 
 setInterval(() => {
-  if (!editingId) loadLeads(false);
+  if (!editingId) {
+    loadLeads(false);
+    syncFromSheet(false);
+  }
 }, 10000);
 
 function formatCurrency(n) {
@@ -980,10 +983,16 @@ function exportToCSV() {
 }
 
 const SYNC_URL_KEY = 'sheet-sync-url';
-const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzR75g6OLra0ALxLmDJ9jAJPmxK79HJNOK7e2qur3BmM5BmgPDpcD_5Q7gBl_t2LUi0/exec';
+const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzqFdN-WMVSRt2lXlM3NJ7XRgYZ0JNUZCIemr-VlOttR1W7dR4OVFkaiXJGQPw40g_i/exec';
+let sheetSyncInProgress = false;
 
 async function getSyncUrl() {
-  return localStorage.getItem(SYNC_URL_KEY) || DEFAULT_SHEET_URL;
+  const savedUrl = localStorage.getItem(SYNC_URL_KEY) || '';
+  if (!savedUrl || savedUrl.includes('AKfycbx2VYBBwIAhB39ha0AvSHx0i32vUVSCNyMOOb1I0ssN7EcZA4qIn-mNmK2hL6dq0xOF')) {
+    localStorage.setItem(SYNC_URL_KEY, DEFAULT_SHEET_URL);
+    return DEFAULT_SHEET_URL;
+  }
+  return savedUrl;
 }
 
 async function configureSync() {
@@ -1023,8 +1032,10 @@ function sheetLeadToCrm(row) {
 }
 
 async function syncFromSheet(showMessage = true) {
+  if (sheetSyncInProgress || editingId) return;
   const url = await getSyncUrl();
   if (!url) return;
+  sheetSyncInProgress = true;
   try {
     const response = await fetch(url, { cache: 'no-store' });
     if (!response.ok) throw new Error('Google Sheets respondió con un error.');
@@ -1037,6 +1048,8 @@ async function syncFromSheet(showMessage = true) {
     if (showMessage) showToast(`${leads.length} lead(s) importado(s) desde Sheets.`);
   } catch (err) {
     showToast('No se pudo leer Google Sheets. Revisa que la implementación sea pública.');
+  } finally {
+    sheetSyncInProgress = false;
   }
 }
 
