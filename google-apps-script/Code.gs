@@ -21,6 +21,18 @@ function normalizeHeader(value) {
     .toLowerCase();
 }
 
+function prepararColumnaContacto() {
+  const sheet = getSheet();
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
+  const phoneColumn = headers.map(normalizeHeader).indexOf('contacto');
+  if (phoneColumn < 0) throw new Error('No existe la columna CONTACTO.');
+
+  const range = sheet.getRange(1, phoneColumn + 1, sheet.getMaxRows(), 1);
+  range.setNumberFormat('@');
+  range.setDataValidation(null);
+  return 'Columna CONTACTO preparada como texto sin validación.';
+}
+
 function doGet() {
   try {
     const sheet = getSheet();
