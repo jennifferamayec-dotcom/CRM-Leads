@@ -526,7 +526,7 @@
       <option value="Otro">Otro</option>
     </select>
     <button class="btn-secondary" id="syncBtn">Sincronizar con Sheets</button>
-    <button class="btn-secondary" id="exportBtn">Exportar a LEADS_MAESTRO</button>
+    <button class="btn-secondary" id="exportBtn">Descargar respaldo CSV</button>
     <button class="btn-primary" id="addLeadBtn">+ Nuevo lead</button>
     <span class="cloud-status" id="cloudStatus">Conectando nube...</span>
   </div>
@@ -1097,6 +1097,7 @@ async function pushToSheet(lead) {
 
 document.getElementById('syncBtn').addEventListener('click', configureSync);
 document.getElementById('syncBtn').addEventListener('click', () => syncFromSheet());
+document.getElementById('exportBtn').addEventListener('click', exportToCSV);
 document.getElementById('addLeadBtn').addEventListener('click', openAddModal);
 document.getElementById('searchBox').addEventListener('input', render);
 document.getElementById('originFilter').addEventListener('change', render);
