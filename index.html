@@ -757,7 +757,7 @@ function renderLeadList(filtered) {
   const section = document.getElementById('leadListSection');
   const body = document.getElementById('leadListBody');
   const count = document.getElementById('leadListCount');
-  section.style.display = leads.length ? 'block' : 'none';
+  section.style.display = 'none';
   count.textContent = `${filtered.length} visible(s) de ${leads.length}`;
 
   body.innerHTML = filtered.length
