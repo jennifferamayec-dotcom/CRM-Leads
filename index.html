@@ -65,7 +65,6 @@
     z-index: -1;
     pointer-events: none;
     background: radial-gradient(ellipse at center, rgba(255,255,255,0.055), transparent 58%);
-    animation: atmosphere-drift 18s ease-in-out infinite;
   }
 
   header.top {
@@ -77,7 +76,6 @@
     margin-bottom: 24px;
     border-bottom: 1px solid rgba(255,255,255,0.15);
     padding-bottom: 20px;
-    animation: rise-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
     box-shadow: 0 18px 40px rgba(3,10,24,0.14);
   }
 
@@ -100,7 +98,6 @@
     display: flex;
     gap: 10px;
     align-items: center;
-    animation: fade-in 500ms 120ms ease-out both;
   }
 
   input[type="text"], select, textarea, input[type="number"] {
@@ -171,16 +168,11 @@
     border-radius: 8px;
     padding: 14px 16px;
     color: var(--ink);
-    animation: rise-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
     box-shadow: 0 10px 22px rgba(3,10,24,0.16), inset 0 1px 0 rgba(255,255,255,0.6);
   }
   .stat-card:nth-child(2) { animation-delay: 80ms; }
   .stat-card:nth-child(3) { animation-delay: 160ms; }
   .stat-card:nth-child(4) { animation-delay: 240ms; }
-  .stat-card:hover {
-    transform: translateY(-3px);
-    transition: transform 180ms ease;
-  }
 
   .stat-card .value {
     font-family: var(--mono);
@@ -208,7 +200,6 @@
     border: 1px solid rgba(255,255,255,0.14);
     border-radius: 10px;
     padding: 16px;
-    animation: rise-in 560ms 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .section-heading {
@@ -256,7 +247,7 @@
     vertical-align: top;
   }
 
-  .lead-table tbody tr { cursor: pointer; transition: background 180ms ease; }
+  .lead-table tbody tr { cursor: pointer; }
   .lead-table tbody tr:hover { background: rgba(255,255,255,0.08); }
   .lead-table .table-name { font-weight: 600; color: var(--surface); }
   .lead-table .table-muted { color: #9FB0C9; }
@@ -272,9 +263,9 @@
     display: flex;
     flex-direction: column;
     max-height: calc(100vh - 260px);
-    animation: rise-in 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
     box-shadow: 0 16px 30px rgba(3,10,24,0.12), inset 0 1px 0 rgba(255,255,255,0.04);
   }
+    .lead-table tbody tr { cursor: pointer; }
   .column:nth-child(2) { animation-delay: 60ms; }
   .column:nth-child(3) { animation-delay: 120ms; }
   .column:nth-child(4) { animation-delay: 180ms; }
@@ -320,14 +311,8 @@
     padding: 10px 12px;
     cursor: pointer;
     border-left: 3px solid var(--accent);
-    animation: rise-in 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
   }
-  .lead-card:hover {
-    background: var(--surface-alt);
-    transform: translateX(3px);
-    box-shadow: 0 5px 12px rgba(27,42,74,0.12);
-  }
+    .lead-card:hover { background: var(--surface-alt); }
 
   .lead-card .name {
     font-weight: 600;
@@ -449,7 +434,6 @@
     font-size: 13px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.25s ease;
     z-index: 100;
   }
   .toast.show { opacity: 1; }
