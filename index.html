@@ -650,7 +650,10 @@ setInterval(() => {
 
 function formatCurrency(n) {
   if (!n && n !== 0) return '';
-  return '$' + Number(n).toLocaleString('es-CO');
+  const text = String(n).trim();
+  const numericValue = Number(text.replace(/,/g, ''));
+  if (!Number.isFinite(numericValue)) return escapeHtml(text);
+  return '$' + numericValue.toLocaleString('es-CO');
 }
 
 function daysAgo(dateStr) {
