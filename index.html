@@ -303,7 +303,9 @@
     flex-direction: column;
     gap: 8px;
   }
-  .column-body.is-collapsed .lead-card:nth-of-type(n + 6) { display: none; }
+  @media (max-width: 640px) {
+    .column-body.is-collapsed .lead-card:nth-of-type(n + 6) { display: none; }
+  }
   .expand-stage-btn {
     width: 100%;
     margin-top: 2px;
@@ -776,6 +778,7 @@ function render() {
   }).join('');
 
   board.querySelectorAll('.column-body').forEach(body => {
+    if (!window.matchMedia('(max-width: 640px)').matches) return;
     const cards = body.querySelectorAll('.lead-card');
     if (cards.length <= 5) return;
     body.classList.add('is-collapsed');
