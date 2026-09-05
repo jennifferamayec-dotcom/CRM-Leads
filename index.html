@@ -909,6 +909,7 @@ async function saveFromModal() {
     const idx = leads.findIndex(l => l.id === editingId);
     if (idx > -1) leads[idx] = { ...leads[idx], ...data };
     await saveLead(leads[idx]);
+    await pushToSheet(leads[idx]);
     closeModal();
     render();
     showToast('Lead actualizado.');
@@ -916,9 +917,9 @@ async function saveFromModal() {
     const newLead = { id: uid(), createdAt: new Date().toISOString(), ...data };
     leads.push(newLead);
     await saveLead(newLead);
+    await pushToSheet(newLead);
     closeModal();
     render();
-    await pushToSheet(newLead);
   }
   return;
 }
@@ -976,14 +977,10 @@ function exportToCSV() {
 }
 
 const SYNC_URL_KEY = 'sheet-sync-url';
+const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbx2VYBBwIAhB39ha0AvSHx0i32vUVSCNyMOOb1I0ssN7EcZA4qIn-mNmK2hL6dq0xOF/exec';
 
 async function getSyncUrl() {
-  try {
-    const result = await window.storage.get(SYNC_URL_KEY, false);
-    return result && result.value ? result.value : '';
-  } catch (err) {
-    return '';
-  }
+  return localStorage.getItem(SYNC_URL_KEY) || DEFAULT_SHEET_URL;
 }
 
 async function configureSync() {
@@ -995,23 +992,48 @@ async function configureSync() {
   );
   if (url === null) return;
   const key = url.trim() ? window.prompt('Ahora pega la clave secreta que puso en el código (CLAVE_SECRETA):', currentKey) : '';
-  try {
-    await window.storage.set(SYNC_URL_KEY, url.trim(), false);
-    await window.storage.set(SYNC_KEY_KEY, (key || '').trim(), false);
-    showToast(url.trim() ? 'Sincronización configurada.' : 'Sincronización desactivada.');
-  } catch (err) {
-    showToast('No se pudo guardar la configuración de sincronización.');
-  }
+  localStorage.setItem(SYNC_URL_KEY, url.trim());
+  localStorage.setItem(SYNC_KEY_KEY, (key || '').trim());
+  showToast(url.trim() ? 'Sincronización configurada.' : 'Sincronización desactivada.');
+  if (url.trim()) await syncFromSheet();
 }
 
 const SYNC_KEY_KEY = 'sheet-sync-secret';
 
 async function getSyncKey() {
+  return localStorage.getItem(SYNC_KEY_KEY) || 'crm-terrenos-2026-cambia-esta-clave';
+}
+
+function sheetLeadToCrm(row) {
+  return {
+    id: String(row.id || row.identificacion || uid()),
+    name: row.name || row.nombre || '',
+    phone: row.phone || row.contacto || '',
+    origin: row.origin || row.origen || '',
+    terreno: row.terreno || row.interes || row.intereses || '',
+    presupuesto: row.presupuesto || '',
+    stage: row.stage || row.etapa || 'nuevo',
+    notas: row.notas || row.nota || '',
+    lastContact: row.lastContact || row.fecha || '',
+    createdAt: row.createdAt || row.fecha_creacion || new Date().toISOString()
+  };
+}
+
+async function syncFromSheet(showMessage = true) {
+  const url = await getSyncUrl();
+  if (!url) return;
   try {
-    const result = await window.storage.get(SYNC_KEY_KEY, false);
-    return result && result.value ? result.value : '';
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Google Sheets respondió con un error.');
+    const result = await response.json();
+    if (!result.ok && result.error) throw new Error(result.error);
+    if (!Array.isArray(result.leads)) throw new Error('Respuesta inválida de Google Sheets.');
+    leads = result.leads.map(sheetLeadToCrm).filter(lead => lead.name);
+    await Promise.all(leads.map(saveLead));
+    render();
+    if (showMessage) showToast(`${leads.length} lead(s) importado(s) desde Sheets.`);
   } catch (err) {
-    return '';
+    showToast('No se pudo leer Google Sheets. Revisa que la implementación sea pública.');
   }
 }
 
@@ -1026,24 +1048,29 @@ async function pushToSheet(lead) {
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         clave: key || '',
+        id: lead.id || '',
         nombre: lead.name || '',
         origen: lead.origin || '',
         fecha: lead.lastContact ? lead.lastContact.split('T')[0] : '',
+        fecha_creacion: lead.createdAt || '',
         financiamiento: '',
         interes: lead.presupuesto || '',
+        etapa: lead.stage || 'nuevo',
+        terreno: lead.terreno || '',
         nota: lead.notas || '',
         contacto: lead.phone || '',
         tmovin: '',
         resultado: 'En proceso'
       })
     });
-    showToast('Lead agregado y enviado a tu Google Sheet.');
+    showToast('Lead guardado en Vercel y enviado a Google Sheets.');
   } catch (err) {
     showToast('Lead guardado aquí, pero no se pudo enviar a Sheets.');
   }
 }
 
 document.getElementById('syncBtn').addEventListener('click', configureSync);
+document.getElementById('syncBtn').addEventListener('click', () => syncFromSheet());
 document.getElementById('addLeadBtn').addEventListener('click', openAddModal);
 document.getElementById('searchBox').addEventListener('input', render);
 document.getElementById('originFilter').addEventListener('change', render);
@@ -1051,7 +1078,7 @@ document.getElementById('overlay').addEventListener('click', (e) => {
   if (e.target.id === 'overlay') closeModal();
 });
 
-loadLeads();
+loadLeads().then(() => syncFromSheet(false));
 </script>
 
 </body>
